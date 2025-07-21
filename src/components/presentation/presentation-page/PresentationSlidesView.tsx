@@ -10,7 +10,7 @@ import {
 } from "@dnd-kit/sortable";
 import { SlidePreviewRenderer } from "./SlidePreviewRenderer";
 import { usePresentationSlides } from "@/hooks/presentation/usePresentationSlides";
-import { type TElement } from "@udecode/plate-common";
+import { type TElement } from "@/components/presentation/utils/parser";
 import { usePresentationState } from "@/states/presentation-state";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";

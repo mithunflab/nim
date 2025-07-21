@@ -18,7 +18,8 @@ import debounce from "lodash.debounce";
 import { PresentationSlidesView } from "./PresentationSlidesView";
 import { LoadingState } from "./Loading";
 import { PresentationLayout } from "./PresentationLayout";
-import { type Value } from "@udecode/plate-common";
+// Using any type for Value as Plate is stubbed
+type Value = any;
 import {
   getPresentation,
   updatePresentationTheme,

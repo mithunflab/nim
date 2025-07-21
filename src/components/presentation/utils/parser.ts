@@ -1,5 +1,7 @@
-import type { TDescendant, TElement, TText } from "@udecode/plate-common";
-import { ColumnItemPlugin, ColumnPlugin } from "@udecode/plate-layout/react";
+// Stub types for migration
+export type TDescendant = any;
+export type TElement = any;
+export type TText = any;
 import { nanoid } from "nanoid"; // Import nanoid for unique ID generation
 
 // Define a text node with generating property
@@ -19,9 +21,9 @@ export type ImageElement = TElement & {
   query: string;
 };
 export type ColumnItemElement = TElement & {
-  type: typeof ColumnItemPlugin.key;
+  type: "column-item";
 };
-export type ColumnsElement = TElement & { type: typeof ColumnPlugin.key };
+export type ColumnsElement = TElement & { type: "columns" };
 export type BulletElement = TElement & { type: "bullet" };
 export type BulletsElement = TElement & { type: "bullets" };
 export type IconElement = TElement & {
@@ -1063,7 +1065,7 @@ export class SlideParser {
     for (const child of node.children) {
       if (child.tag.toUpperCase() === "DIV") {
         const columnItem: ColumnItemElement = {
-          type: ColumnItemPlugin.key,
+          type: "column-item",
           children: this.processNodes(child.children) as TDescendant[],
         };
         columnItems.push(columnItem);
@@ -1071,7 +1073,7 @@ export class SlideParser {
     }
 
     return {
-      type: ColumnPlugin.key,
+      type: "columns",
       children: columnItems,
     } as ColumnsElement;
   }
