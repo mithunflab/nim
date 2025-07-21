@@ -17,8 +17,6 @@ export function FontSelector({ value, onChange, label }: FontSelectorProps) {
       <FontPicker
         value={value}
         onChange={onChange}
-        autoLoad={true}
-        mode="combo"
       />
     </div>
   );

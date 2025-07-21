@@ -41,8 +41,7 @@ export const useDebouncedSave = (options: UseDebouncedSaveOptions = {}) => {
         try {
           setSavingStatus("saving");
 
-          await updatePresentation({
-            id: currentPresentationId,
+          await updatePresentation(currentPresentationId, {
             content: {
               slides,
             },
@@ -98,8 +97,7 @@ export const useDebouncedSave = (options: UseDebouncedSaveOptions = {}) => {
     try {
       setSavingStatus("saving");
 
-      await updatePresentation({
-        id: currentPresentationId,
+      await updatePresentation(currentPresentationId, {
         content: {
           slides,
         },

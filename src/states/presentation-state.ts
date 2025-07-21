@@ -16,7 +16,7 @@ interface PresentationState {
   pageStyle: string;
   showTemplates: boolean;
   presentationInput: string;
-  imageModel: ImageModelList;
+  imageModel: string;
   presentationStyle: string;
   savingStatus: "idle" | "saving" | "saved";
   isPresenting: boolean;
@@ -48,7 +48,7 @@ interface PresentationState {
   setShowTemplates: (show: boolean) => void;
   setPresentationInput: (input: string) => void;
   setOutline: (topics: string[]) => void;
-  setImageModel: (model: ImageModelList) => void;
+  setImageModel: (model: string) => void;
   setPresentationStyle: (style: string) => void;
   setSavingStatus: (status: "idle" | "saving" | "saved") => void;
   setIsPresenting: (isPresenting: boolean) => void;

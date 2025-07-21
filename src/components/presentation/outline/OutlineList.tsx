@@ -1,6 +1,10 @@
 // Stub component
 import React from 'react';
 
-export default function OutlineList() {
-  return <div>Outline List - Stubbed for migration</div>;
+interface OutlineListProps {
+  presentationId: string;
+}
+
+export default function OutlineList({ presentationId }: OutlineListProps) {
+  return <div>Outline List - Stubbed for migration (ID: {presentationId})</div>;
 }

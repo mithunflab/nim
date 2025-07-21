@@ -1,6 +1,13 @@
-import { generateReactHelpers } from "@uploadthing/react";
+// Stub implementation for uploadthing
+export const useUploadThing = (endpoint: string) => ({
+  startUpload: async (files: File[]) => {
+    // Stub implementation
+    return Promise.resolve([]);
+  },
+  isUploading: false,
+});
 
-import type { OurFileRouter } from "@/app/api/uploadthing/core";
-
-export const { useUploadThing, uploadFiles } =
-  generateReactHelpers<OurFileRouter>();
+export const uploadFiles = async (endpoint: string, files: File[]) => {
+  // Stub implementation
+  return Promise.resolve([]);
+};

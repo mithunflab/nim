@@ -22,3 +22,8 @@ export const createEmptyPresentation = () => Promise.resolve({
   success: true,
   id: 'new-presentation' 
 });
+
+export const updatePresentation = (id: string, data: any) => Promise.resolve({
+  success: true,
+  message: 'Presentation updated successfully'
+});
