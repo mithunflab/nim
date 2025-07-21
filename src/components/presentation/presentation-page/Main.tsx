@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { usePresentationState } from "@/states/presentation-state";
 
@@ -25,7 +25,7 @@ import {
   updatePresentationTheme,
 } from "@/app/_actions/presentation/presentationActions";
 import { type PlateNode, type PlateSlide } from "../utils/parser";
-import { type ImageModelList } from "@/app/_actions/image/generate";
+import { ImageModelList } from "@/app/_actions/image/generate";
 
 export default function PresentationPage() {
   const params = useParams();
@@ -57,7 +57,7 @@ export default function PresentationPage() {
     queryFn: async () => {
       const result = await getPresentation(id);
       if (!result.success) {
-        throw new Error(result.message ?? "Failed to load presentation");
+        throw new Error("Failed to load presentation");
       }
       return result.presentation;
     },
@@ -116,22 +116,18 @@ export default function PresentationPage() {
       setCurrentPresentation(presentationData.id, presentationData.title);
       setPresentationInput(presentationData.title);
 
-      // Load all content from the database
-      const presentationContent = presentationData.presentation?.content as {
-        slides: PlateSlide[];
-      };
-
+      // Load all content from the database - use slides directly from presentationData
       // Set slides
-      setSlides(presentationContent?.slides ?? []);
+      setSlides(presentationData?.slides ?? []);
 
       // Set outline
-      if (presentationData.presentation?.outline) {
-        setOutline(presentationData.presentation.outline);
+      if (presentationData?.outline) {
+        setOutline(presentationData.outline);
       }
 
       // Set theme if available
-      if (presentationData?.presentation?.theme) {
-        const themeId = presentationData.presentation.theme;
+      if (presentationData?.theme) {
+        const themeId = presentationData.theme;
 
         // Check if this is a predefined theme
         if (themeId in themes) {
@@ -139,7 +135,7 @@ export default function PresentationPage() {
           setTheme(themeId as Themes);
         } else {
           // If not in predefined themes, treat as custom theme
-          void getCustomThemeById(themeId)
+          void getCustomThemeById()
             .then((result) => {
               if (result.success && result.theme) {
                 // Set the theme with the custom theme data
@@ -160,20 +156,20 @@ export default function PresentationPage() {
       }
 
       // Set imageModel if available
-      if (presentationData?.presentation?.imageModel) {
+      if (presentationData?.imageModel) {
         setImageModel(
-          presentationData?.presentation?.imageModel as ImageModelList
+          presentationData?.imageModel as typeof ImageModelList[0]['id']
         );
       }
 
       // Set presentationStyle if available
-      if (presentationData?.presentation?.presentationStyle) {
-        setPresentationStyle(presentationData.presentation.presentationStyle);
+      if (presentationData?.presentationStyle) {
+        setPresentationStyle(presentationData.presentationStyle);
       }
 
       // Set language if available
-      if (presentationData.presentation?.language) {
-        setLanguage(presentationData.presentation.language);
+      if (presentationData.language) {
+        setLanguage(presentationData.language);
       }
     }
   }, [

@@ -156,7 +156,7 @@ export function ThemeCreator({ children }: { children?: ReactNode }) {
         themeData: themeStyleData, // Add the theme styling data as nested themeData field
       };
 
-      const result = await createCustomTheme(themeData);
+      const result = await createCustomTheme();
       if (result.success) {
         toast({
           title: "Success",

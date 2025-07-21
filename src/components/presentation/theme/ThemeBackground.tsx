@@ -11,9 +11,10 @@ import { useEffect, useState } from "react";
 interface ThemeBackgroundProps {
   className?: string;
   children: React.ReactNode;
+  themeData?: ThemeProperties;
 }
 
-export function ThemeBackground({ className, children }: ThemeBackgroundProps) {
+export function ThemeBackground({ className, children, themeData }: ThemeBackgroundProps) {
   const { theme: presentationTheme, customThemeData } = usePresentationState();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";

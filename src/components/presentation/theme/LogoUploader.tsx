@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ImageIcon, Trash2, Upload } from "lucide-react";
-import Image from "next/image";
+// Replaced next/image with regular img tag for Vite migration
 
 interface LogoUploaderProps {
   logoPreview: string | null;
@@ -51,11 +51,10 @@ export function LogoUploader({
       </div>
       {logoPreview ? (
         <div className="relative h-32 w-full overflow-hidden rounded-md border">
-          <Image
+          <img
             src={logoPreview}
             alt="Logo Preview"
-            fill
-            className="object-contain"
+            className="w-full h-full object-contain"
           />
         </div>
       ) : (

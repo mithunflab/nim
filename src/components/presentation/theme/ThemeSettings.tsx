@@ -14,7 +14,7 @@ import { type ImageModelList } from "@/app/_actions/image/generate";
 import { ThemeModal } from "./ThemeModal";
 import { Button } from "@/components/ui/button";
 
-export const IMAGE_MODELS: { value: ImageModelList; label: string }[] = [
+export const IMAGE_MODELS: { value: typeof ImageModelList[0]['id']; label: string }[] = [
   { value: "black-forest-labs/FLUX1.1-pro", label: "FLUX 1.1 [pro]" },
   { value: "black-forest-labs/FLUX.1-schnell", label: "FLUX.1 [schnell]" },
   {
@@ -128,7 +128,7 @@ export function ThemeSettings() {
         <Label className="text-sm font-medium">Image Generation Model</Label>
         <Select
           value={imageModel || "black-forest-labs/FLUX.1-schnell-Free"}
-          onValueChange={(value) => setImageModel(value as ImageModelList)}
+          onValueChange={(value) => setImageModel(value as typeof ImageModelList[0]['id'])}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select image model" />
