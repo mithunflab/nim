@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { PresentationPage } from '@/components/presentation/presentation-page/Main';
+import PresentationPage from '@/components/presentation/presentation-page/Main';
 
 export default function PresentationViewPage() {
   const { id } = useParams<{ id: string }>();
@@ -8,5 +8,5 @@ export default function PresentationViewPage() {
     return <div>Presentation not found</div>;
   }
 
-  return <PresentationPage id={id} />;
+  return <PresentationPage />;
 }
