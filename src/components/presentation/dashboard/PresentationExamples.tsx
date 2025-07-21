@@ -1,3 +1,4 @@
+
 import { Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePresentationState } from "@/states/presentation-state";
@@ -6,6 +7,8 @@ import { type InfiniteData, useQuery } from "@tanstack/react-query";
 import { type fetchPresentations } from "@/actions/presentation/fetchPresentations";
 
 type Presentation = Awaited<ReturnType<typeof fetchPresentations>>;
+
+// Import the templates from PresentationTemplates
 const EXAMPLE_PROMPTS = [
   {
     id: "ai-future",
@@ -23,7 +26,7 @@ const EXAMPLE_PROMPTS = [
     slides: 15,
     lang: "en-US",
     style: "traditional",
-    color: { background: "rgba(239, 68, 68, 0.1)", color: "#EF4444" },
+    color: { background: "rgba(34, 197, 94, 0.1)", color: "#22C55E" },
   },
   {
     id: "project-management",
@@ -62,112 +65,75 @@ const EXAMPLE_PROMPTS = [
     color: { background: "rgba(59, 130, 246, 0.1)", color: "#3B82F6" },
   },
   {
-    id: "smart-cities",
-    icon: "🌆",
-    title: "Smart Cities: The Future of Urban Development",
-    slides: 12,
-    lang: "en-US",
-    style: "traditional",
-    color: { background: "rgba(99, 102, 241, 0.1)", color: "#6366F1" },
-  },
-  {
-    id: "quantum-computing",
-    icon: "⚛️",
-    title: "Quantum Computing in Engineering Applications",
-    slides: 10,
-    lang: "en-US",
-    style: "professional",
-    color: { background: "rgba(139, 92, 246, 0.1)", color: "#8B5CF6" },
-  },
-  {
-    id: "biotech",
-    icon: "🧬",
-    title: "Biotechnology Innovations in Engineering",
+    id: "business-strategy",
+    icon: "📊",
+    title: "Quarterly Business Review and Strategy",
     slides: 15,
     lang: "en-US",
-    style: "default",
+    style: "corporate",
+    color: { background: "rgba(59, 130, 246, 0.1)", color: "#3B82F6" },
+  },
+  {
+    id: "startup-pitch",
+    icon: "🚀",
+    title: "Startup Pitch Deck for Investors",
+    slides: 12,
+    lang: "en-US",
+    style: "modern",
     color: { background: "rgba(16, 185, 129, 0.1)", color: "#10B981" },
   },
   {
-    id: "space-tech",
-    icon: "🚀",
-    title: "Space Technology and Engineering Challenges",
-    slides: 12,
+    id: "medical-research",
+    icon: "🏥",
+    title: "Medical Research Findings Presentation",
+    slides: 18,
     lang: "en-US",
-    style: "traditional",
-    color: { background: "rgba(249, 115, 22, 0.1)", color: "#F97316" },
+    style: "clinical",
+    color: { background: "rgba(14, 165, 233, 0.1)", color: "#0EA5E9" },
   },
   {
-    id: "digital-twins",
-    icon: "👥",
-    title: "Digital Twins in Modern Engineering",
-    slides: 10,
+    id: "brand-strategy",
+    icon: "🎨",
+    title: "Brand Strategy and Marketing Plan",
+    slides: 14,
     lang: "en-US",
-    style: "professional",
+    style: "creative",
     color: { background: "rgba(236, 72, 153, 0.1)", color: "#EC4899" },
   },
   {
-    id: "materials-science",
-    icon: "⚗️",
-    title: "Advanced Materials Science Breakthroughs",
-    slides: 15,
+    id: "financial-analysis",
+    icon: "💰",
+    title: "Investment Portfolio Analysis",
+    slides: 16,
     lang: "en-US",
-    style: "default",
-    color: { background: "rgba(234, 179, 8, 0.1)", color: "#EAB308" },
+    style: "financial",
+    color: { background: "rgba(5, 150, 105, 0.1)", color: "#059669" },
   },
   {
-    id: "iot-engineering",
-    icon: "📱",
-    title: "IoT Applications in Engineering",
-    slides: 12,
+    id: "climate-research",
+    icon: "🌡️",
+    title: "Climate Change Research and Impact",
+    slides: 20,
     lang: "en-US",
-    style: "traditional",
-    color: { background: "rgba(20, 184, 166, 0.1)", color: "#14B8A6" },
-  },
-  {
-    id: "green-engineering",
-    icon: "♻️",
-    title: "Green Engineering Solutions",
-    slides: 10,
-    lang: "en-US",
-    style: "professional",
-    color: { background: "rgba(132, 204, 22, 0.1)", color: "#84CC16" },
-  },
-  {
-    id: "vr-engineering",
-    icon: "🥽",
-    title: "VR and AR in Engineering Design",
-    slides: 12,
-    lang: "en-US",
-    style: "traditional",
-    color: { background: "rgba(217, 70, 239, 0.1)", color: "#D946EF" },
-  },
-  {
-    id: "machine-learning",
-    icon: "🧠",
-    title: "Machine Learning for Engineering Optimization",
-    slides: 15,
-    lang: "en-US",
-    style: "default",
-    color: { background: "rgba(244, 63, 94, 0.1)", color: "#F43F5E" },
-  },
+    style: "environmental",
+    color: { background: "rgba(34, 197, 94, 0.1)", color: "#22C55E" },
+  }
 ];
 
 export function PresentationExamples() {
   const [examples, setExamples] = useState(EXAMPLE_PROMPTS.slice(0, 6));
   const { setNumSlides, setLanguage, setPageStyle, setPresentationInput } =
     usePresentationState();
+  
   // Use useQuery to subscribe to the same data as RecentPresentations
   const { data: presentationsData } = useQuery({
-    queryKey: ["presentations-all"], // Match the key exactly
-    // No queryFn needed as it will use the cache
+    queryKey: ["presentations-all"],
     queryFn: () => {
       return { pages: [] as Presentation[] };
     },
     enabled: true,
   });
 
-  console.log(presentationsData);
   // Hide examples if there are existing presentations
   if (presentationsData && Array.isArray(presentationsData) && presentationsData.length > 0) {
     return null;
