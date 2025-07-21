@@ -1,28 +1,18 @@
-// Comprehensive replacement for all text-editor components
+// Mass stub replacement for all remaining text-editor plate-ui components
 import React from 'react';
 
-// Basic stub components
+// Basic stub components for all missing plate-ui components
 const StubDiv: React.FC<any> = ({ children, ...props }) => <div {...props}>{children}</div>;
 const StubButton: React.FC<any> = ({ children, ...props }) => <button {...props}>{children}</button>;
-const StubInput: React.FC<any> = ({ children, ...props }) => <input {...props} />;
+const StubInput: React.FC<any> = ({ ...props }) => <input {...props} />;
 const StubSpan: React.FC<any> = ({ children, ...props }) => <span {...props}>{children}</span>;
 
-export { StubDiv as AiLeft };
-export { StubDiv as AiMenuItems };
-export { StubDiv as AiMenu };
-export { StubButton as AiToolbarButton };
-export { StubDiv as AlignDropdownMenu };
-export { StubDiv as AudioElement };
-export { StubDiv as BlockContextMenu };
-export { StubDiv as BlockSelection };
-export { StubDiv as BlockquoteElement };
 export { StubDiv as BlockquoteElementStatic };
 export { StubDiv as Caption };
 export { StubSpan as CodeLeaf };
-export { StubDiv as CodeLineElement };
 export { StubDiv as CodeLineElementStatic };
-export { StubSpan as CodeSyntaxLeaf };
 export { StubSpan as CodeSyntaxLeafStatic };
+export { StubSpan as CodeSyntaxLeaf };
 export { StubDiv as ColorDropdownMenu };
 export { StubInput as ColorInput };
 export { StubDiv as ColorsCustom };
@@ -36,6 +26,7 @@ export { StubDiv as ExcalidrawElement };
 export { StubDiv as FloatingToolbar };
 export { StubDiv as FloatingToolbarButtons };
 export { StubButton as FontFamilyToolbarButton };
+export { StubDiv as FontLoader };
 export { StubInput as FontSizeInput };
 export { StubDiv as HeadingElement };
 export { StubDiv as HeadingElementStatic };
@@ -83,5 +74,9 @@ export { StubDiv as TodoListElement };
 export { StubDiv as ToggleElement };
 export { StubButton as ToggleToolbarButton };
 export { StubDiv as TurnIntoDropdownMenu };
+
+// Additional exports for compatibility
+export { StubButton as AIToolbarButton }; // Alias for naming compatibility
+export const useFontSizeDropdownMenu = () => ({ radioGroupProps: {}, checkboxItemProps: () => ({}) });
 
 export default StubDiv;
