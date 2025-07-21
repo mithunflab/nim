@@ -9,12 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+type NoteCategory = "speaker" | "research" | "reminder" | "idea";
+
 interface Note {
   id: string;
   title: string;
   content: string;
   slideNumber?: number;
-  category: "speaker" | "research" | "reminder" | "idea";
+  category: NoteCategory;
   color: string;
   isPinned: boolean;
   createdAt: Date;
@@ -81,11 +83,11 @@ export function PresentationNotes({ presentationId }: PresentationNotesProps) {
     title: "",
     content: "",
     slideNumber: "",
-    category: "speaker" as const,
+    category: "speaker" as NoteCategory,
     color: "bg-yellow-100 border-yellow-300"
   });
 
-  const categoryColors = {
+  const categoryColors: Record<NoteCategory, string> = {
     speaker: "bg-yellow-100 border-yellow-300",
     research: "bg-blue-100 border-blue-300",
     reminder: "bg-red-100 border-red-300",
@@ -243,7 +245,7 @@ export function PresentationNotes({ presentationId }: PresentationNotesProps) {
                     </div>
                     <div>
                       <label className="text-sm font-medium mb-2 block">Category</label>
-                      <Select value={formData.category} onValueChange={(value: "speaker" | "research" | "reminder" | "idea") => {
+                      <Select value={formData.category} onValueChange={(value: NoteCategory) => {
                         setFormData({
                           ...formData, 
                           category: value,

@@ -19,6 +19,13 @@ interface AISuggestion {
   implemented: boolean;
 }
 
+interface ChatMessage {
+  id: string;
+  type: "ai" | "user";
+  content: string;
+  timestamp: Date;
+}
+
 interface PresentationAIProps {
   presentationId: string;
 }
@@ -70,10 +77,10 @@ export function PresentationAI({ presentationId }: PresentationAIProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [chatInput, setChatInput] = useState("");
-  const [chatMessages, setChatMessages] = useState([
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       id: "1",
-      type: "ai" as const,
+      type: "ai",
       content: "Hello! I'm your AI presentation assistant. I can help you improve your slides, suggest content, and optimize your presentation for better engagement. What would you like to work on?",
       timestamp: new Date()
     }
@@ -104,9 +111,9 @@ export function PresentationAI({ presentationId }: PresentationAIProps) {
   const handleChatSubmit = () => {
     if (!chatInput.trim()) return;
 
-    const userMessage = {
+    const userMessage: ChatMessage = {
       id: Date.now().toString(),
-      type: "user" as const,
+      type: "user",
       content: chatInput,
       timestamp: new Date()
     };
@@ -116,9 +123,9 @@ export function PresentationAI({ presentationId }: PresentationAIProps) {
 
     // Simulate AI response
     setTimeout(() => {
-      const aiResponse = {
+      const aiResponse: ChatMessage = {
         id: (Date.now() + 1).toString(),
-        type: "ai" as const,
+        type: "ai",
         content: "I understand you'd like help with that. Let me analyze your presentation and provide specific suggestions based on your request.",
         timestamp: new Date()
       };

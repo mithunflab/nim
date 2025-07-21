@@ -182,7 +182,7 @@ export function PresentationExport({ presentationId }: PresentationExportProps) 
                   <Checkbox
                     id="notes"
                     checked={includeNotes}
-                    onCheckedChange={setIncludeNotes}
+                    onCheckedChange={(checked) => setIncludeNotes(checked === true)}
                   />
                   <Label htmlFor="notes" className="text-sm">
                     Speaker notes
@@ -192,7 +192,7 @@ export function PresentationExport({ presentationId }: PresentationExportProps) 
                   <Checkbox
                     id="comments"
                     checked={includeComments}
-                    onCheckedChange={setIncludeComments}
+                    onCheckedChange={(checked) => setIncludeComments(checked === true)}
                   />
                   <Label htmlFor="comments" className="text-sm">
                     Comments and feedback

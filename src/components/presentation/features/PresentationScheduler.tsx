@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
+type EventType = "in-person" | "online" | "hybrid";
+
 interface PresentationEvent {
   id: string;
   title: string;
@@ -18,7 +20,7 @@ interface PresentationEvent {
   date: Date;
   duration: number;
   location: string;
-  type: "in-person" | "online" | "hybrid";
+  type: EventType;
   attendees: string[];
   reminderTime: number;
   status: "scheduled" | "ongoing" | "completed" | "cancelled";
@@ -65,7 +67,7 @@ export function PresentationScheduler({ presentationId }: PresentationSchedulerP
     time: "",
     duration: 60,
     location: "",
-    type: "in-person" as const,
+    type: "in-person" as EventType,
     attendees: "",
     reminderTime: 15
   });
@@ -272,7 +274,7 @@ export function PresentationScheduler({ presentationId }: PresentationSchedulerP
 
                   <div>
                     <Label htmlFor="type">Event Type</Label>
-                    <Select value={formData.type} onValueChange={(value: "in-person" | "online" | "hybrid") => setFormData({...formData, type: value})}>
+                    <Select value={formData.type} onValueChange={(value: EventType) => setFormData({...formData, type: value})}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>

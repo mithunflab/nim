@@ -11,10 +11,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 
+type QuestionType = "multiple-choice" | "true-false" | "short-answer";
+
 interface QuizQuestion {
   id: string;
   question: string;
-  type: "multiple-choice" | "true-false" | "short-answer";
+  type: QuestionType;
   options?: string[];
   correctAnswer: string | string[];
   explanation?: string;
@@ -98,7 +100,7 @@ export function PresentationQuiz({ presentationId }: PresentationQuizProps) {
   const [editingQuestion, setEditingQuestion] = useState<QuizQuestion | null>(null);
   const [formData, setFormData] = useState({
     question: "",
-    type: "multiple-choice" as const,
+    type: "multiple-choice" as QuestionType,
     options: ["", "", "", ""],
     correctAnswer: "",
     explanation: "",
@@ -117,7 +119,7 @@ export function PresentationQuiz({ presentationId }: PresentationQuizProps) {
       id: editingQuestion?.id || Date.now().toString(),
       question: formData.question,
       type: formData.type,
-      options: formData.type === "short-answer" ? undefined : formData.options.filter(o => o.trim()),
+      options: formData.type !== "short-answer" ? formData.options.filter(o => o.trim()) : undefined,
       correctAnswer: formData.correctAnswer,
       explanation: formData.explanation,
       slideNumber: formData.slideNumber ? parseInt(formData.slideNumber) : undefined,
@@ -261,7 +263,7 @@ export function PresentationQuiz({ presentationId }: PresentationQuizProps) {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="text-sm font-medium mb-2 block">Type</label>
-                        <Select value={formData.type} onValueChange={(value: "multiple-choice" | "true-false" | "short-answer") => setFormData({...formData, type: value})}>
+                        <Select value={formData.type} onValueChange={(value: QuestionType) => setFormData({...formData, type: value})}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
