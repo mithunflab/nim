@@ -3,7 +3,7 @@
 import { Wand2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePresentationState } from "@/states/presentation-state";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { PresentationInput } from "./PresentationInput";
 import { PresentationControls } from "./PresentationControls";
@@ -13,10 +13,10 @@ import { PresentationExamples } from "./PresentationExamples";
 import { PresentationsSidebar } from "./PresentationsSidebar";
 import { useEffect } from "react";
 import { PresentationHeader } from "./PresentationHeader";
-import { createEmptyPresentation } from "@/app/_actions/presentation/presentationActions";
+import { createEmptyPresentation } from "@/actions/presentation/presentationActions";
 
 export function PresentationDashboard() {
-  const router = useRouter();
+  const navigate = useNavigate();
   const {
     presentationInput,
     isGeneratingOutline,
@@ -53,7 +53,7 @@ export function PresentationDashboard() {
           result.presentation.id,
           result.presentation.title
         );
-        router.push(`/presentation/generate/${result.presentation.id}`);
+        navigate(`/presentation/generate/${result.presentation.id}`);
       } else {
         setIsGeneratingOutline(false);
         toast.error(result.message || "Failed to create presentation");
@@ -74,7 +74,7 @@ export function PresentationDashboard() {
           result.presentation.id,
           result.presentation.title
         );
-        router.push(`/presentation/generate/${result.presentation.id}`);
+        navigate(`/presentation/generate/${result.presentation.id}`);
       } else {
         setIsGeneratingOutline(false);
         toast.error(result.message || "Failed to create presentation");

@@ -13,9 +13,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import {
-  useInfiniteQuery,
+  useQuery,
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
@@ -36,184 +36,75 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
-import { type BaseDocument } from "@prisma/client";
-import { fetchPresentations } from "@/app/_actions/presentation/fetchPresentations";
-import {
-  deletePresentations,
-  getPresentationContent,
-  updatePresentationTitle,
-} from "@/app/_actions/presentation/presentationActions";
-import {
-  addToFavorites,
-  removeFromFavorites,
-} from "@/app/_actions/presentation/toggleFavorite";
-
-type PresentationDocument = BaseDocument & {
-  presentation: {
-    id: string;
-    content: unknown;
-    theme: string;
-  } | null;
-};
+import type { Presentation } from "@/lib/mock-data";
+import { fetchPresentations } from "@/actions/presentation/fetchPresentations";
+import { deletePresentation } from "@/actions/presentation/presentationActions";
+import { toggleFavorite } from "@/actions/presentation/toggleFavorite";
 
 export function RecentPresentations() {
-  const router = useRouter();
-  const { toast } = useToast();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const setCurrentPresentation = usePresentationState(
     (state) => state.setCurrentPresentation
   );
-  const setIsSheetOpen = usePresentationState((state) => state.setIsSheetOpen);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedPresentationId, setSelectedPresentationId] = useState<
     string | null
   >(null);
   const [isNavigating, setIsNavigating] = useState<string | null>(null);
 
-  const { data, isLoading, isError } = useInfiniteQuery({
-    queryKey: ["presentations-all"],
-    queryFn: async ({ pageParam = 0 }) => {
-      const response = await fetchPresentations(pageParam);
-      return response;
-    },
-    initialPageParam: 0,
-    getNextPageParam: (lastPage) => (lastPage?.hasMore ? 0 : 0),
+  const { data: presentations, isLoading, isError } = useQuery({
+    queryKey: ["presentations"],
+    queryFn: fetchPresentations,
   });
 
   const { mutate: deletePresentationMutation } = useMutation({
     mutationFn: async (id: string) => {
-      const result = await deletePresentations([id]);
-      if (!result.success && !result.partialSuccess) {
-        throw new Error(result.message ?? "Failed to delete presentation");
+      const result = await deletePresentation(id);
+      if (!result.success) {
+        throw new Error("Failed to delete presentation");
       }
       return result;
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ["presentations-all"],
+        queryKey: ["presentations"],
       });
-      await queryClient.invalidateQueries({ queryKey: ["recent-items"] });
       setDeleteDialogOpen(false);
-      toast({
-        title: "Success",
-        description: "Presentation deleted successfully",
-      });
+      toast.success("Presentation deleted successfully");
     },
     onError: (error) => {
       console.error("Failed to delete presentation:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete presentation",
-      });
-    },
-  });
-
-  const { mutate: renameMutation } = useMutation({
-    mutationFn: async (params: { id: string; currentTitle: string }) => {
-      const newTitle = prompt("Enter new title", params.currentTitle || "");
-      if (!newTitle) return null;
-
-      const result = await updatePresentationTitle(params.id, newTitle);
-      if (!result.success) {
-        throw new Error(result.message ?? "Failed to rename presentation");
-      }
-      return result;
-    },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["presentations-all"] });
-      await queryClient.invalidateQueries({ queryKey: ["recent-items"] });
-      toast({
-        title: "Success",
-        description: "Presentation renamed successfully",
-      });
-    },
-    onError: (error) => {
-      console.error("Failed to rename presentation:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to rename presentation",
-      });
+      toast.error("Failed to delete presentation");
     },
   });
 
   const { mutate: favoriteMutation } = useMutation({
     mutationFn: async (id: string) => {
-      // Try to add to favorites first
-      const result = await addToFavorites(id);
-      if (result.error === "Document is already in favorites") {
-        // If already favorited, remove from favorites
-        return removeFromFavorites(id);
-      }
-      return result;
+      return toggleFavorite(id);
     },
-    onSuccess: async (result) => {
-      if (!result.success) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to update favorites",
-        });
-        return;
-      }
-
+    onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ["documents", "favorites"],
+        queryKey: ["presentations"],
       });
-      await queryClient.invalidateQueries({
-        queryKey: ["presentations-all"],
-      });
-
-      toast({
-        title: "Success",
-        description: "Favorite updated successfully",
-      });
+      toast.success("Favorite updated successfully");
     },
     onError: () => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update favorites",
-      });
+      toast.error("Failed to update favorites");
     },
   });
 
-  const handlePresentationClick = async (
-    presentation: PresentationDocument
-  ) => {
+  const handlePresentationClick = async (presentation: Presentation) => {
     try {
       setIsNavigating(presentation.id);
       setCurrentPresentation(presentation.id, presentation.title);
-
-      // Check presentation status
-      const response = await getPresentationContent(presentation.id);
-
-      if (!response.success) {
-        throw new Error(
-          response.message ?? "Failed to check presentation status"
-        );
-      }
-
-      // Route based on content status
-      if (
-        (response?.presentation?.content as { slides: unknown[] })?.slides
-          ?.length > 0
-      ) {
-        router.push(`/presentation/${presentation.id}`);
-      } else {
-        router.push(`/presentation/generate/${presentation.id}`);
-      }
+      navigate(`/presentation/${presentation.id}`);
     } catch (error) {
       console.error("Failed to navigate:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to open presentation",
-      });
+      toast.error("Failed to open presentation");
     } finally {
       setIsNavigating(null);
     }
@@ -266,18 +157,11 @@ export function RecentPresentations() {
     );
   }
 
-  if (!data?.pages[0]) return null;
-
-  const presentations = data.pages[0].items;
-  if (presentations.length === 0) return null;
+  if (!presentations || presentations.length === 0) return null;
 
   const handleDelete = (id: string) => {
     setSelectedPresentationId(id);
     setDeleteDialogOpen(true);
-  };
-
-  const handleRename = (id: string, currentTitle: string) => {
-    renameMutation({ id, currentTitle });
   };
 
   const handleFavorite = (id: string) => {
@@ -292,10 +176,6 @@ export function RecentPresentations() {
     });
   };
 
-  const handleViewAll = () => {
-    setIsSheetOpen(true);
-  };
-
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -307,7 +187,6 @@ export function RecentPresentations() {
         </div>
         <Button
           variant="outline"
-          onClick={handleViewAll}
           className="gap-2 text-primary hover:bg-primary/5 hover:text-primary"
         >
           View all
@@ -322,32 +201,23 @@ export function RecentPresentations() {
             className="group relative overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
           >
             <div
-              className="relative aspect-video bg-muted"
+              className="relative aspect-video bg-muted cursor-pointer"
               onClick={() => handlePresentationClick(presentation)}
             >
-              {presentation.thumbnailUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={presentation.thumbnailUrl}
-                  alt={presentation.title || "Presentation thumbnail"}
-                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              <div className="flex h-full w-full items-center justify-center bg-primary/10">
+                <Clock
+                  className={cn(
+                    "h-12 w-12 transition-all",
+                    isNavigating === presentation.id
+                      ? "animate-spin text-primary"
+                      : "text-primary/50"
+                  )}
                 />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-primary/10">
-                  <Clock
-                    className={cn(
-                      "h-12 w-12 transition-all",
-                      isNavigating === presentation.id
-                        ? "animate-spin text-primary"
-                        : "text-primary/50"
-                    )}
-                  />
-                </div>
-              )}
+              </div>
             </div>
             <CardContent className="p-0">
               <div
-                className="flex flex-col space-y-2 p-4"
+                className="flex flex-col space-y-2 p-4 cursor-pointer"
                 onClick={() => handlePresentationClick(presentation)}
               >
                 <h3 className="line-clamp-1 text-lg font-semibold text-foreground">
@@ -376,20 +246,11 @@ export function RecentPresentations() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem
-                    onClick={() =>
-                      handleRename(presentation.id, presentation.title || "")
-                    }
-                    className="cursor-pointer"
-                  >
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Rename
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
                     onClick={() => handleFavorite(presentation.id)}
                     className="cursor-pointer"
                   >
                     <Star className="mr-2 h-4 w-4" />
-                    Add to favorites
+                    {presentation.isFavorite ? "Remove from favorites" : "Add to favorites"}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => handleDelete(presentation.id)}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Check,
@@ -9,12 +9,12 @@ import {
   Star,
   Trash2,
   Pencil,
-  Presentation,
+  Presentation as PresentationIcon,
   Copy,
   Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,329 +32,162 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-import { type BaseDocument } from "@prisma/client";
+import type { Presentation } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
 import { usePresentationState } from "@/states/presentation-state";
-import {
-  deletePresentations,
-  duplicatePresentation,
-  getPresentationContent,
-  updatePresentationTitle,
-} from "@/app/_actions/presentation/presentationActions";
-import {
-  addToFavorites,
-  removeFromFavorites,
-} from "@/app/_actions/presentation/toggleFavorite";
+import { deletePresentation } from "@/actions/presentation/presentationActions";
+import { toggleFavorite } from "@/actions/presentation/toggleFavorite";
 
 interface PresentationItemProps {
-  presentation: BaseDocument & {
-    presentation: {
-      id: string;
-      content: unknown;
-      theme: string;
-    } | null;
-  };
-  isFavorited?: boolean;
-  isSelecting?: boolean;
-  onSelect?: (id: string) => void;
-  isSelected?: boolean;
-  isLoading?: boolean;
+  presentation: Presentation;
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  className?: string;
 }
 
-export function PresentationItem({
+export default function PresentationItem({
   presentation,
-  isFavorited = false,
-  isSelecting = false,
-  onSelect,
-  isSelected = false,
-  isLoading: initialLoading = false,
+  onEdit,
+  onDelete,
+  className,
 }: PresentationItemProps) {
-  const router = useRouter();
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
+  const navigate = useNavigate();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [title, setTitle] = useState(presentation.title);
   const queryClient = useQueryClient();
-  const { toast } = useToast();
-  const setCurrentPresentation = usePresentationState(
-    (state) => state.setCurrentPresentation
-  );
+  const { setCurrentPresentation } = usePresentationState();
 
-  const { mutate: deletePresentationMutation, isPending: isDeleting } =
-    useMutation({
-      mutationFn: async () => {
-        const result = await deletePresentations([presentation.id]);
-        if (!result.success && !result.partialSuccess) {
-          throw new Error(result.message ?? "Failed to delete presentation");
-        }
-        return result;
-      },
-      onSuccess: async () => {
-        await queryClient.invalidateQueries({
-          queryKey: ["presentations-all"],
-        });
-        await queryClient.invalidateQueries({ queryKey: ["recent-items"] });
-        setIsDeleteDialogOpen(false);
-        toast({
-          title: "Success",
-          description: "Presentation deleted successfully",
-        });
-      },
-      onError: (error) => {
-        console.error("Failed to delete presentation:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to delete presentation",
-        });
-      },
-    });
-
-  const { mutate: renameMutation, isPending: isRenaming } = useMutation({
-    mutationFn: async () => {
-      const newTitle = prompt("Enter new title", presentation.title || "");
-      if (!newTitle) return null;
-
-      const result = await updatePresentationTitle(presentation.id, newTitle);
-      if (!result.success) {
-        throw new Error(result.message ?? "Failed to rename presentation");
-      }
-      return result;
+  const deleteMutation = useMutation({
+    mutationFn: deletePresentation,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["presentations"] });
+      onDelete?.(presentation.id);
+      toast.success("Presentation deleted successfully");
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["presentations-all"] });
-      await queryClient.invalidateQueries({ queryKey: ["recent-items"] });
-      toast({
-        title: "Success",
-        description: "Presentation renamed successfully",
-      });
-    },
-    onError: (error) => {
-      console.error("Failed to rename presentation:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to rename presentation",
-      });
+    onError: () => {
+      toast.error("Failed to delete presentation");
     },
   });
 
-  const { mutate: duplicateMutation, isPending: isDuplicating } = useMutation({
-    mutationFn: async () => {
-      const result = await duplicatePresentation(presentation.id);
-      if (!result.success) {
-        throw new Error(result.message ?? "Failed to duplicate presentation");
-      }
-      return result;
+  const favoriteMutation = useMutation({
+    mutationFn: () => toggleFavorite(presentation.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["presentations"] });
+      toast.success(
+        presentation.isFavorite ? "Removed from favorites" : "Added to favorites"
+      );
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["presentations-all"] });
-      toast({
-        title: "Success",
-        description: "Presentation duplicated successfully",
-      });
-    },
-    onError: (error) => {
-      console.error("Failed to duplicate presentation:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to duplicate presentation",
-      });
+    onError: () => {
+      toast.error("Failed to update favorite status");
     },
   });
 
-  const { mutate: favoriteMutation, isPending: isFavoritePending } =
-    useMutation({
-      mutationFn: async () => {
-        if (isFavorited) {
-          return removeFromFavorites(presentation.id);
-        }
-        return addToFavorites(presentation.id);
-      },
-      onSuccess: async (result) => {
-        if (!result.success) {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to update favorites",
-          });
-          return;
-        }
-
-        await queryClient.invalidateQueries({
-          queryKey: ["documents", "favorites"],
-        });
-        await queryClient.invalidateQueries({
-          queryKey: ["presentations-all"],
-        });
-
-        toast({
-          title: "Success",
-          description: isFavorited
-            ? "Presentation removed from favorites"
-            : "Presentation added to favorites",
-        });
-      },
-      onError: () => {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to update favorites",
-        });
-      },
-    });
-
-  const handleClick = async (e: React.MouseEvent) => {
-    if (isSelecting && onSelect) {
-      e.preventDefault();
-      onSelect(presentation.id);
-      return;
-    }
-
-    try {
-      setIsNavigating(true);
-      setCurrentPresentation(presentation.id, presentation.title);
-
-      // Check presentation status
-      const response = await getPresentationContent(presentation.id);
-
-      if (!response.success) {
-        throw new Error(
-          response.message ?? "Failed to check presentation status"
-        );
-      }
-
-      console.log(response);
-      // Route based on content status
-      if (Object.keys(response?.presentation?.content ?? {}).length > 0) {
-        router.push(`/presentation/${presentation.id}`);
-      } else {
-        router.push(`/presentation/generate/${presentation.id}`);
-      }
-    } catch (error) {
-      console.error("Failed to navigate:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to open presentation",
-      });
-    } finally {
-      setIsNavigating(false);
-    }
+  const handleView = () => {
+    setCurrentPresentation(presentation.id, presentation.title);
+    navigate(`/presentation/${presentation.id}`);
   };
 
-  const isLoading = initialLoading || isNavigating;
+  const handleEdit = () => {
+    setCurrentPresentation(presentation.id, presentation.title);
+    navigate(`/presentation/generate/${presentation.id}`);
+  };
+
+  const handleDelete = () => {
+    deleteMutation.mutate(presentation.id);
+    setShowDeleteDialog(false);
+  };
+
+  const handleFavorite = () => {
+    favoriteMutation.mutate();
+  };
 
   return (
     <>
       <div
         className={cn(
-          "group relative flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-all hover:bg-accent/5",
-          isSelected && "ring-2 ring-primary",
-          isLoading && "pointer-events-none opacity-70"
+          "group relative flex cursor-pointer flex-col overflow-hidden rounded-lg border border-border bg-card p-4 shadow-sm transition-all hover:shadow-md",
+          className
         )}
       >
-        <div className="flex w-full items-center gap-3" onClick={handleClick}>
-          {isSelecting ? (
-            <div
-              className={cn(
-                "flex h-5 w-5 items-center justify-center rounded-full border",
-                isSelected
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "bg-background"
-              )}
-            >
-              {isSelected && <Check className="h-3 w-3" />}
+        <div className="flex items-start justify-between">
+          <div className="flex-1 min-w-0" onClick={handleView}>
+            <div className="flex items-center gap-2 mb-2">
+              <PresentationIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+              <h3 className="text-sm font-medium truncate">{presentation.title}</h3>
             </div>
-          ) : (
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-              {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              ) : (
-                <Presentation className="h-5 w-5 text-primary" />
-              )}
-            </div>
-          )}
-          <div>
-            <h3 className="font-medium text-foreground">
-              {isLoading ? "Loading..." : presentation.title || "Untitled"}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {isLoading
-                ? "Loading..."
-                : new Date(presentation.updatedAt).toLocaleDateString()}
+            <p className="text-xs text-muted-foreground">
+              {new Date(presentation.updatedAt).toLocaleDateString()}
             </p>
           </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <EllipsisVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleView}>
+                <PresentationIcon className="mr-2 h-4 w-4" />
+                View
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleEdit}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleFavorite}>
+                <Star
+                  className={cn(
+                    "mr-2 h-4 w-4",
+                    presentation.isFavorite && "fill-current text-yellow-500"
+                  )}
+                />
+                {presentation.isFavorite ? "Remove from favorites" : "Add to favorites"}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setShowDeleteDialog(true)}
+                className="text-destructive"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
-        {!isSelecting && (
-          <div className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <EllipsisVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => renameMutation()}
-                  disabled={isRenaming}
-                >
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Rename
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => duplicateMutation()}
-                  disabled={isDuplicating}
-                >
-                  <Copy className="mr-2 h-4 w-4" />
-                  Duplicate
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => favoriteMutation()}
-                  disabled={isFavoritePending}
-                >
-                  <Star
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      isFavorited && "fill-primary"
-                    )}
-                  />
-                  {isFavorited ? "Remove from favorites" : "Add to favorites"}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setIsDeleteDialogOpen(true)}
-                  disabled={isDeleting}
-                  className="text-destructive"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+        {presentation.isFavorite && (
+          <Star className="absolute top-2 right-2 h-4 w-4 fill-current text-yellow-500" />
         )}
       </div>
 
-      <AlertDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-      >
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Presentation</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your
-              presentation.
+              Are you sure you want to delete "{presentation.title}"? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deletePresentationMutation()}
+              onClick={handleDelete}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? "Deleting..." : "Delete"}
+              {deleteMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
