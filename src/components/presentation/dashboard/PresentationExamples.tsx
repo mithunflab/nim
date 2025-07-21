@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { usePresentationState } from "@/states/presentation-state";
 import { useState } from "react";
 import { type InfiniteData, useQuery } from "@tanstack/react-query";
-import { type fetchPresentations } from "@/app/_actions/presentation/fetchPresentations";
+import { type fetchPresentations } from "@/actions/presentation/fetchPresentations";
 
 type Presentation = Awaited<ReturnType<typeof fetchPresentations>>;
 const EXAMPLE_PROMPTS = [
@@ -168,10 +168,10 @@ export function PresentationExamples() {
   });
 
   console.log(presentationsData);
-  if (
-    (presentationsData as InfiniteData<Presentation>)?.pages[0]?.items?.length
-  )
+  // Hide examples if there are existing presentations
+  if (presentationsData && Array.isArray(presentationsData) && presentationsData.length > 0) {
     return null;
+  }
 
   const handleExampleClick = (example: (typeof EXAMPLE_PROMPTS)[0]) => {
     setPresentationInput(example.title);

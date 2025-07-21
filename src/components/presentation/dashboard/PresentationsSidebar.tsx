@@ -16,20 +16,14 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { usePresentationState } from "@/states/presentation-state";
 import { useMutation } from "@tanstack/react-query";
-import { PresentationItem } from "../PresentationItem";
-import { type Prisma } from "@prisma/client";
+import PresentationItem from "../PresentationItem";
 import { SelectionControls } from "./SelectionControls";
-import { deletePresentations } from "@/app/_actions/presentation/presentationActions";
-import { fetchPresentations } from "@/app/_actions/presentation/fetchPresentations";
-
-type PresentationDocument = Prisma.BaseDocumentGetPayload<{
-  include: {
-    presentation: true;
-  };
-}>;
+import { deletePresentation } from "@/actions/presentation/presentationActions";
+import { fetchPresentations } from "@/actions/presentation/fetchPresentations";
+import type { Presentation } from "@/lib/mock-data";
 
 interface PresentationResponse {
-  items: PresentationDocument[];
+  items: Presentation[];
   hasMore: boolean;
 }
 
@@ -54,11 +48,14 @@ export function PresentationsSidebar() {
 
   const { mutate: deleteSelectedPresentations } = useMutation({
     mutationFn: async () => {
-      const result = await deletePresentations(selectedPresentations);
-      if (!result.success && !result.partialSuccess) {
-        throw new Error(result.message ?? "Failed to delete presentations");
+      // Delete presentations one by one since we don't have bulk delete
+      const promises = selectedPresentations.map(id => deletePresentation(id));
+      const results = await Promise.allSettled(promises);
+      const failures = results.filter(r => r.status === 'rejected');
+      if (failures.length > 0) {
+        throw new Error(`Failed to delete ${failures.length} presentations`);
       }
-      return result;
+      return { success: true, message: "Presentations deleted successfully" };
     },
     onSuccess: async (result) => {
       await queryClient.invalidateQueries({ queryKey: ["presentations-all"] });
@@ -90,8 +87,12 @@ export function PresentationsSidebar() {
   } = useInfiniteQuery<PresentationResponse>({
     queryKey: ["presentations-all"],
     queryFn: async ({ pageParam = 0 }) => {
-      const response = await fetchPresentations(pageParam as number);
-      return response as PresentationResponse;
+      const response = await fetchPresentations();
+      // Convert the array response to paginated format
+      return {
+        items: response || [],
+        hasMore: false
+      } as PresentationResponse;
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage: PresentationResponse, allPages) => {
@@ -154,9 +155,6 @@ export function PresentationsSidebar() {
             <PresentationItem
               key={presentation.id}
               presentation={presentation}
-              isSelecting={isSelecting}
-              onSelect={togglePresentationSelection}
-              isSelected={selectedPresentations.includes(presentation.id)}
             />
           ))}
         </div>

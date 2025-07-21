@@ -5,7 +5,7 @@ import { useCompletion } from "ai/react";
 import { toast } from "sonner";
 import { usePresentationState } from "@/states/presentation-state";
 import { SlideParser } from "../utils/parser";
-import { updatePresentation } from "@/app/_actions/presentation/presentationActions";
+import { updatePresentation } from "@/actions/presentation/presentationActions";
 
 export function PresentationGenerationManager() {
   const {
